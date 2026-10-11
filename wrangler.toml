@@ -1,0 +1,10 @@
+name = "ultimate-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ADMIN_TOKEN = "kawunlere_admin_2024_secure"
+
+[[kv_namespaces]]
+binding = "KEYS"
+id = "35da3aa749fe472ab1bebf45abf35b0b"
