@@ -4,6 +4,8 @@ compatibility_date = "2024-01-01"
 
 [vars]
 ADMIN_TOKEN = "kawunlere_admin_2024_secure"
+OWNER_KEY = "OWNER-MASTER-2024-LIFETIME-kawunlere"
+HMAC_SECRET = "kawunlere-hmac-secret-2024-very-long-string"
 
 [[kv_namespaces]]
 binding = "KEYS"
