@@ -17,6 +17,8 @@
 .btn-free { background: #001a0d; }
 .btn-premium { background: linear-gradient(135deg, #ff5722, #ff9800); color: #fff; border-color: #ff5722; width: 100%; }
 input.email-input { width: 100%; padding: 10px; background: #000; color: #00ff41; border: 1px solid #00ff41; border-radius: 4px; font-family: monospace; margin: 8px 0; box-sizing: border-box; }
+.owner-box { background: rgba(255,215,0,0.1); border: 2px solid gold; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+.owner-key { font-size: 18px; font-weight: bold; color: gold; padding: 15px; background: #000; border: 1px solid gold; border-radius: 4px; font-family: monospace; word-break: break-all; margin: 15px 0; text-shadow: 0 0 8px gold; }
 </style>
 </head>
 <body>
@@ -31,6 +33,15 @@ input.email-input { width: 100%; padding: 10px; background: #000; color: #00ff41
 <h2 style="text-align:center;color:#00ff41;text-shadow:0 0 10px #00ff41;">Get Your Key</h2>
 
 <div id="loading" style="text-align:center;color:#00802b;padding:20px;">Loading...</div>
+
+<div id="ownerBox" style="display:none;">
+<div class="owner-box">
+<h3 style="color:gold;text-shadow:0 0 10px gold;">👑 Owner Access</h3>
+<p style="color:#aaa;">Welcome back, boss! Your owner key:</p>
+<div id="ownerKeyDisplay" class="owner-key"></div>
+<p style="color:#888;font-size:12px;">Lifetime access. Already active in your mod.</p>
+</div>
+</div>
 
 <div id="plans" style="display:none;">
 <div class="plan">
@@ -66,6 +77,7 @@ input.email-input { width: 100%; padding: 10px; background: #000; color: #00ff41
 <script>
 const PAYSTACK_KEY = "pk_live_3dafba532f8d5a53f0f17a8482e453cb33185d1b";
 const API = "https://ultimate-apii.kawunlere.workers.dev";
+const OWNER_KEY = "OWNER-MASTER-2024-LIFETIME-kawunlere";
 const CALLBACK = "https://ultimate-store-247.kawunlere.workers.dev/paystack-callback.html";
 const params = new URLSearchParams(window.location.search);
 const deviceId = params.get('device');
@@ -73,31 +85,60 @@ const deviceId = params.get('device');
 if (!deviceId || deviceId.length < 5) {
   document.getElementById('loading').innerText = 'Invalid device ID. Open from mod menu.';
 } else {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('plans').style.display = 'block';
-  document.getElementById('freeBtn').href = '8ad.html?device=' + encodeURIComponent(deviceId);
+  // Check if this device is the owner
+  fetch(API + '/api/owner-check', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deviceId, key: OWNER_KEY })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.valid) {
+      // OWNER - show gold box, no ads no payment
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('ownerBox').style.display = 'block';
+      document.getElementById('ownerKeyDisplay').innerText = OWNER_KEY;
+    } else {
+      // Regular user
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('plans').style.display = 'block';
+      document.getElementById('freeBtn').href = '8ad.html?device=' + encodeURIComponent(deviceId);
+      setupPay();
+      setupCheck();
+    }
+  })
+  .catch(() => {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('plans').style.display = 'block';
+    document.getElementById('freeBtn').href = '8ad.html?device=' + encodeURIComponent(deviceId);
+    setupPay();
+    setupCheck();
+  });
+}
 
-  function pay(amount, days) {
-    const email = document.getElementById('userEmail').value;
-    if (!email || !email.includes('@')) { alert('Enter valid email'); return; }
-    const handler = PaystackPop.setup({
-      key: PAYSTACK_KEY,
-      email: email,
-      amount: amount * 100,
-      currency: 'NGN',
-      ref: 'mod_' + Date.now() + '_' + deviceId.slice(-6),
-      metadata: { deviceId: deviceId, days: days },
-      callback: function(response) {
-        window.location.href = CALLBACK + '?reference=' + response.reference + '&device=' + encodeURIComponent(deviceId);
-      },
-      onClose: function() { alert('Payment cancelled'); }
-    });
-    handler.openIframe();
-  }
-
+function setupPay() {
   document.getElementById('payBtn1').onclick = function() { pay(1500, 14); };
   document.getElementById('payBtn2').onclick = function() { pay(5000, 30); };
+}
 
+function pay(amount, days) {
+  const email = document.getElementById('userEmail').value;
+  if (!email || !email.includes('@')) { alert('Enter valid email'); return; }
+  const handler = PaystackPop.setup({
+    key: PAYSTACK_KEY,
+    email: email,
+    amount: amount * 100,
+    currency: 'NGN',
+    ref: 'mod_' + Date.now() + '_' + deviceId.slice(-6),
+    metadata: { deviceId: deviceId, days: days },
+    callback: function(response) {
+      window.location.href = CALLBACK + '?reference=' + response.reference + '&device=' + encodeURIComponent(deviceId);
+    },
+    onClose: function() { alert('Payment cancelled'); }
+  });
+  handler.openIframe();
+}
+
+function setupCheck() {
   document.getElementById('checkBtn').onclick = function() {
     const k = prompt('Enter your key:');
     if (!k) return;
