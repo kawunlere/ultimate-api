@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get Your Key - Ultimate Store 24/7</title>
+<meta name="monetag" content="8c65e44f884bece35ed56f60d7323722">
+<script src="https://quge5.com/88/tag.min.js" data-zone="294019" async data-cfasync="false"></script>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.plan { background: rgba(0,26,13,0.9); border: 1px solid #00ff41; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 0 15px rgba(0,255,65,0.3); }
+.plan h3 { color: #00ff41; text-shadow: 0 0 8px #00ff41; margin-bottom: 10px; }
+.plan .price { color: #00ff41; font-size: 24px; font-weight: bold; text-shadow: 0 0 8px #00ff41; }
+.plan .desc { color: #aaa; font-size: 13px; margin: 10px 0; }
+.btn { display: inline-block; padding: 12px 25px; background: rgba(0,26,13,0.85); color: #00ff41; border: 1px solid #00ff41; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 10px; cursor: pointer; }
+.btn:hover { background: #00ff41; color: #000; }
+.btn-free { background: #001a0d; }
+.btn-premium { background: linear-gradient(135deg, #ff5722, #ff9800); color: #fff; border-color: #ff5722; width: 100%; }
+input.email-input { width: 100%; padding: 10px; background: #000; color: #00ff41; border: 1px solid #00ff41; border-radius: 4px; font-family: monospace; margin: 8px 0; box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div class="floating-orb orb1"></div>
+<div class="floating-orb orb2"></div>
+<div class="floating-orb orb3"></div>
+<div class="matrix-rain" id="matrixRain"></div>
+<div id="adsBar" class="ads-bar"></div>
+<header class="topbar"><a href="/" class="logo">Ultimate Store 24/7</a></header>
+
+<div style="max-width:500px;margin:30px auto;padding:20px;">
+<h2 style="text-align:center;color:#00ff41;text-shadow:0 0 10px #00ff41;">Get Your Key</h2>
+
+<div id="loading" style="text-align:center;color:#00802b;padding:20px;">Loading...</div>
+
+<div id="plans" style="display:none;">
+<div class="plan">
+<h3>FREE KEY</h3>
+<div class="price">FREE</div>
+<div class="desc">2 days. Watch 8 ads to unlock.</div>
+<a id="freeBtn" class="btn btn-free" style="display:block;text-align:center;">Watch 8 Ads</a>
+</div>
+
+<div class="plan">
+<h3>PREMIUM KEY</h3>
+<input type="email" id="userEmail" class="email-input" placeholder="Your email">
+<button class="btn btn-premium" id="payBtn1">₦1,500 — 14 days</button>
+<button class="btn btn-premium" id="payBtn2" style="margin-top:5px;">₦5,000 — 30 days</button>
+<p style="font-size:11px;color:#888;margin-top:8px;">Secured by Paystack. Auto key on success.</p>
+</div>
+
+<div style="text-align:center;margin-top:20px;">
+<button id="checkBtn" class="btn">I already have a key</button>
+</div>
+</div>
+
+<div id="keyBox" style="display:none;margin-top:20px;">
+<p style="color:#00ff41;text-align:center;">Your Key (copy it):</p>
+<div id="keyDisplay" style="font-size:18px;font-weight:bold;color:#00ff41;padding:15px;background:#000;border:1px solid #00ff41;border-radius:4px;text-align:center;font-family:monospace;word-break:break-all;"></div>
+<p id="keyExpires" style="color:#888;font-size:12px;text-align:center;margin-top:5px;"></p>
+<p id="keyType" style="color:#00ff41;font-size:12px;text-align:center;"></p>
+<button class="btn" onclick="window.location='/'" style="display:block;width:100%;">Back to Home</button>
+</div>
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+const PAYSTACK_KEY = "pk_live_3dafba532f8d5a53f0f17a8482e453cb33185d1b";
+const API = "https://ultimate-apii.kawunlere.workers.dev";
+const CALLBACK = "https://ultimate-store-247.kawunlere.workers.dev/paystack-callback.html";
+const params = new URLSearchParams(window.location.search);
+const deviceId = params.get('device');
+
+if (!deviceId || deviceId.length < 5) {
+  document.getElementById('loading').innerText = 'Invalid device ID. Open from mod menu.';
+} else {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('plans').style.display = 'block';
+  document.getElementById('freeBtn').href = '8ad.html?device=' + encodeURIComponent(deviceId);
+
+  function pay(amount, days) {
+    const email = document.getElementById('userEmail').value;
+    if (!email || !email.includes('@')) { alert('Enter valid email'); return; }
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_KEY,
+      email: email,
+      amount: amount * 100,
+      currency: 'NGN',
+      ref: 'mod_' + Date.now() + '_' + deviceId.slice(-6),
+      metadata: { deviceId: deviceId, days: days },
+      callback: function(response) {
+        window.location.href = CALLBACK + '?reference=' + response.reference + '&device=' + encodeURIComponent(deviceId);
+      },
+      onClose: function() { alert('Payment cancelled'); }
+    });
+    handler.openIframe();
+  }
+
+  document.getElementById('payBtn1').onclick = function() { pay(1500, 14); };
+  document.getElementById('payBtn2').onclick = function() { pay(5000, 30); };
+
+  document.getElementById('checkBtn').onclick = function() {
+    const k = prompt('Enter your key:');
+    if (!k) return;
+    fetch(API + '/api/verify-key', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, key: k })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.valid) {
+        document.getElementById('plans').style.display = 'none';
+        document.getElementById('keyBox').style.display = 'block';
+        document.getElementById('keyDisplay').innerText = k;
+        document.getElementById('keyExpires').innerText = 'Expires: ' + new Date(data.expires).toLocaleString();
+        document.getElementById('keyType').innerText = 'Type: ' + data.type + ' (' + (data.daysLeft || '?') + ' days left)';
+      } else {
+        alert('Invalid or expired: ' + (data.message || ''));
+      }
+    });
+  };
+}
+
+(function() {
+  const rain = document.getElementById('matrixRain');
+  if (!rain) return;
+  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+  for (let i = 0; i < 25; i++) {
+    const col = document.createElement('div');
+    col.className = 'matrix-column';
+    col.style.left = (i * 4) + '%';
+    col.style.animationDuration = (4 + Math.random() * 4) + 's';
+    col.style.animationDelay = Math.random() * 5 + 's';
+    let text = '';
+    for (let j = 0; j < 30; j++) text += chars[Math.floor(Math.random() * chars.length)];
+    col.innerText = text;
+    rain.appendChild(col);
+  }
+})();
+</script>
+</body>
+</html>
